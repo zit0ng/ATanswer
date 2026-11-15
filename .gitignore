@@ -1,0 +1,28 @@
+# ATanswer
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# local settings and user data (API key!)
+data/settings.json
+settings-backup*.json
+data/logs/
+data/tmp/
+data/templates/
+data/browser-profile/
+
+# build artifacts
+build/
+dist/
+*.spec
+*.zip
+*.exe
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
