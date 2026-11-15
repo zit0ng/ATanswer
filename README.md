@@ -371,19 +371,14 @@ ATanswer/
 
 ---
 
-## 5. 技术方案（与聊天截图方案的对应关系）
+## 5. 技术方案
 
-聊天截图中建议的技术栈是：**Flet 界面 + pyautogui（电脑端）+ OpenCV/Pillow（截屏识别）+ ADB/uiautomator2（手机端）**，并强调"一套前端、双端后端"。
-
-本实现保留了该架构的核心思想，但针对"开箱即用、无需联网安装依赖"做了等价替换：
-
-| 聊天截图建议 | 本程序实现 | 原因 |
-| --- | --- | --- |
-| Flet 界面 | tkinter 自绘深色组件（`app/widgets.py`） | 本机没有网络、无法 `pip install flet`；tkinter 是标准库，零依赖即可运行。UI 层只依赖控制器接口，后续可平滑替换为 Flet |
-| `PCController` / `MobileController` 统一 `start()`、`stop()` | `app/controllers/base.py` 定义 `BaseController`；`PCController` 完整实现，`MobileController` 预留 | 与截图方案一致：UI 不关心具体设备，设备层可插拔 |
-| pyautogui 模拟鼠标 | `winapi.py` 直接调用 **SendInput**（ctypes） | 更快、更底层，不依赖第三方库；支持左/右/中键、双击、还原鼠标位置 |
-| Pillow/OpenCV 截屏识别 | **GDI BitBlt 抓屏** + 纯 Python 模板匹配（`matcher.py`） | 无第三方依赖；GDI 抓屏 2560×1440 约 20–30 ms，匹配通常在几毫秒内完成 |
-| 代码中 `platform.system()` 判断设备 | `app/controllers/__init__.py::create_controller()` | 当前 Windows 返回 `PCController`；其它平台返回占位控制器并提示 |
+- **界面**：tkinter 自绘深色组件，主窗口只保留常用功能，高级设置和运行监测独立窗口。
+- **截图答题**：GDI BitBlt 抓屏 + AI 多模态模型识别，支持矩形框选、全屏、AI 看答案、再次识别。
+- **浏览器混合答题**：Chrome DevTools Protocol 连接 Edge/Chrome，DOM 定位选项、输入框、UEditor 填空和下一题按钮；AI 只负责读题和给答案。
+- **字体反爬**：题目文字由截图视觉模型读取；点击和填写仍通过 DOM 完成。
+- **热键**：F6 单次答题，F7 单次填空，F8 AI 看答案/再次识别。
+- **发布**：源码可直接运行；`build_exe.bat` 可打包为 exe。
 
 ### AI 答题链路
 
