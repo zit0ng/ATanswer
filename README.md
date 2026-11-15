@@ -1,17 +1,18 @@
 # ATanswer（Windows 版）
 
-> 根据聊天截图里的架构思路实现：**一套界面 + 统一控制器接口 + 双端后端预留**。
-> 当前版本完成 **Windows 电脑端**：定点连点、屏幕找图点击、**AI 答题（多模态大模型识别题目并自动作答）**、全局热键、模板截取、识别测试。
+> ATanswer 是一个桌面答题辅助工具：支持截图 AI 看答案、单次填空/选择、自动答题，以及浏览器混合答题（DOM 定位 + 视觉读题）。
+>
+> 浏览器混合答题适合字体反爬页面：选项和输入框通过 DOM 操作，题目内容由 AI 视觉模型读取。
 
-纯 Python 标准库实现（tkinter + ctypes），**无需安装任何第三方依赖**，双击 `启动.bat` 即可运行。
+运行需要 Python 3.11+；基础功能使用标准库，浏览器混合答题额外需要 `requests` 和 `websocket-client`。
 
 ![主界面](docs/screenshot-main.png)
 
-| 定点连点 | 找图点击 | AI 答题 |
+| 高级设置 | 运行监测 | 浏览器混合答题 |
 | --- | --- | --- |
-| ![定点连点运行中](docs/screenshot-running.png) | ![找图点击](docs/screenshot-image.png) | ![AI 答题](docs/screenshot-ai.png) |
+| ![高级设置](docs/screenshot-ai.png) | ![运行监测](docs/screenshot-preview.png) | ![浏览器混合答题](docs/screenshot-browser-hybrid.png) |
 
-![识别测试预览](docs/screenshot-preview.png)
+![逐字录入](docs/screenshot-typing.png)
 
 ---
 
@@ -341,7 +342,7 @@ ATanswer/
 │   ├── controllers/
 │   │   ├── base.py            # 控制器抽象接口（start/pause/resume/stop）
 │   │   ├── pc_controller.py   # Windows PC 控制器（抓屏 + 匹配 + 点击）
-│   │   └── mobile_controller.py  # 手机端占位实现（后续接入）
+│   │   └── mobile_controller.py  # 占位控制器
 │   ├── winapi.py              # GDI 抓屏 / SendInput / 全局热键 / DPI / 管理员
 │   ├── matcher.py             # 纯 Python 模板匹配
 │   ├── ai_client.py           # OpenAI 兼容多模态接口客户端（纯 urllib）
@@ -491,15 +492,3 @@ build_exe.bat
 ```
 
 完成后 exe 位于 `dist\ATanswer\ATanswer.exe`（onedir 形式，可直接整个目录拷贝使用）。
-
----
-
-## 9. 后续接入手机端（路线）
-
-1. 在 `app/controllers/mobile_controller.py` 中实现 `BaseController` 的 `start/pause/resume/stop`；
-2. 手机端可选用：
-   - 电脑控手机：ADB + `uiautomator2`（需 `pip install uiautomator2`）；
-   - 纯手机端：Python + `pyjnius` 调用 Android 无障碍服务，或改用 AutoX.js 单独实现；
-3. UI 无需改动：`create_controller()` 按平台返回对应控制器即可。
-
-> 手机端实现需要额外的运行时与权限（无障碍服务、USB 调试/ADB），不包含在当前 Windows 版中。

@@ -50,6 +50,13 @@ def window_rect(window) -> tuple[int, int, int, int]:
 def grab_window(window, filename: str) -> None:
     window.update_idletasks()
     window.update()
+    try:
+        # 截图时临时改成完全不透明，避免桌面/其它窗口透出来。
+        window.attributes("-alpha", 1.0)
+        window.attributes("-topmost", True)
+        window.lift()
+    except tk.TclError:
+        pass
     time.sleep(0.25)
     window.update()
     left, top, right, bottom = window_rect(window)
