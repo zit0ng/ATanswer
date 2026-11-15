@@ -1,0 +1,44 @@
+# ATanswer Non-Commercial Redistribution License 1.0
+
+Copyright (c) 2026 Zitong Wang (zitongQAQ)
+
+ATanswer is source-available software. It is **not** an OSI-approved open-source license because commercial use and commercial redistribution are restricted.
+
+## 1. Permission
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, merge, and distribute the Software for **personal, educational, research, or other non-commercial purposes only**, subject to the conditions below.
+
+## 2. Commercial use and commercial redistribution are prohibited
+
+You may not, without prior written permission from the copyright holder:
+
+1. sell, rent, lease, sublicense, or otherwise commercially distribute the Software or any derivative work;
+2. bundle the Software with a paid product or paid service;
+3. distribute the Software through a paid download, paid membership, paid course, paid support plan, or any platform whose primary purpose is commercial distribution;
+4. use the Software to provide a paid service, paid hosted service, or commercial SaaS product;
+5. remove, obscure, or alter this license or any copyright notice.
+
+Personal, non-commercial redistribution is allowed only if:
+
+- this license file is included in full;
+- the original copyright notice is retained;
+- the redistributed version clearly identifies any modifications;
+- no fee is charged for the Software itself or for access to it.
+
+## 3. Contributions
+
+Unless explicitly stated otherwise, any contribution intentionally submitted for inclusion in the Software shall be licensed under the same terms as this license.
+
+## 4. Termination
+
+Any violation of this license automatically terminates the rights granted under it. Upon termination, you must stop using and distributing the Software and destroy all copies in your possession or control.
+
+## 5. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 6. Contact
+
+For commercial licensing or any use not expressly permitted by this license, contact the copyright holder through the repository:
+
+https://github.com/zitongQAQ/ATanswer
