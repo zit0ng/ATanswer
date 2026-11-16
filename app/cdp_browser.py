@@ -222,7 +222,10 @@ class BrowserSession:
             and not str(x.get("url", "")).startswith(("chrome://", "edge://", "about:"))
         ]
         if not pages:
-            raise RuntimeError("浏览器当前只有新标签页，请先在这个浏览器里打开答题页面")
+            raise RuntimeError(
+                "浏览器当前只有新标签页，请先在这个浏览器里打开答题页面；"
+                "再点击「启动/连接浏览器」按钮，显示已连接后点击「开始」即可。"
+            )
         target = next((x for x in pages if x.get("url", "").startswith(("http://", "https://"))), pages[0])
         self.target_info = target
         self.ws = _MiniWebSocket(target["webSocketDebuggerUrl"], timeout=12)

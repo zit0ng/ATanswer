@@ -331,21 +331,23 @@ class BrowserHybridWindow(tk.Toplevel):
         btns.pack(fill="x", pady=(0, 8))
         self.btn_connect = RoundedButton(
             btns, text="启动/连接浏览器", command=self._connect,
-            width=150, height=34, radius=8, bg=PALETTE["bg2"],
-            hover_bg=PALETTE["card_hover"], border_color=PALETTE["border"],
-            font=font(10),
+            width=150, height=34, radius=8, bg="#86efac",
+            hover_bg="#4ade80", press_bg="#22c55e", fg="#052e16",
+            border_color="#4ade80", font=font(10, bold=True),
         )
         self.btn_connect.pack(side="left")
         self.btn_start = RoundedButton(
             btns, text="开始", command=self._start,
-            width=90, height=34, radius=8, bg=PALETTE["accent_dark"],
-            hover_bg=PALETTE["accent"], font=font(10, bold=True),
+            width=90, height=34, radius=8, bg="#7dd3fc",
+            hover_bg="#38bdf8", press_bg="#0ea5e9", fg="#082f49",
+            border_color="#38bdf8", font=font(10, bold=True),
         )
         self.btn_start.pack(side="left", padx=(8, 0))
         self.btn_stop = RoundedButton(
             btns, text="停止", command=self._stop,
-            width=80, height=34, radius=8, bg=PALETTE["danger"],
-            hover_bg=PALETTE["danger_hover"], font=font(10, bold=True),
+            width=80, height=34, radius=8, bg="#fca5a5",
+            hover_bg="#f87171", press_bg="#ef4444", fg="#450a0a",
+            border_color="#f87171", font=font(10, bold=True),
         )
         self.btn_stop.pack(side="left", padx=(8, 0))
         self.status = tk.Label(btns, text="未连接", bg=PALETTE["bg"],
