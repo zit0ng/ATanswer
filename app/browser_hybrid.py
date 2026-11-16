@@ -12,6 +12,7 @@ import tkinter as tk
 from pathlib import Path
 
 from . import ai_client
+from . import error_hints
 from .cdp_browser import BrowserSession, find_browser
 from .widgets import PALETTE, RoundedButton, font
 
@@ -274,6 +275,7 @@ class BrowserHybridWindow(tk.Toplevel):
         self._stop = threading.Event()
         self._worker: threading.Thread | None = None
         self._ui_queue: queue.Queue = queue.Queue()
+        self._last_error_message = ""
         self.title("浏览器混合答题")
         self.configure(bg=PALETTE["bg"])
         try:
@@ -366,6 +368,9 @@ class BrowserHybridWindow(tk.Toplevel):
                 elif kind == "status":
                     text, color = value
                     self.status.configure(text=str(text), fg=color)
+                elif kind == "error":
+                    title, error, context = value
+                    self._show_error(title, error, context)
         except queue.Empty:
             pass
         except tk.TclError:  # pragma: no cover
@@ -393,6 +398,22 @@ class BrowserHybridWindow(tk.Toplevel):
             self.status.configure(text=text, fg=color or PALETTE["muted"])
         else:
             self._ui_queue.put(("status", (text, color or PALETTE["muted"])))
+
+    def _report_error(self, title: str, error: str, context: str = "") -> None:
+        self._last_error_message = error
+        if threading.current_thread() is threading.main_thread():
+            self._show_error(title, error, context)
+        else:
+            self._ui_queue.put(("error", (title, error, context)))
+
+    def _show_error(self, title: str, error: str, context: str = "") -> None:
+        if not error:
+            return
+        self._log(f"{title}：{error}")
+        try:
+            error_hints.show_error(self, title, error, context)
+        except Exception:
+            pass
 
     def _connect(self) -> None:
         try:
@@ -424,7 +445,7 @@ class BrowserHybridWindow(tk.Toplevel):
             self._log(f"已连接浏览器：{session.target_info.get('url', '')}")
         except Exception as exc:  # noqa: BLE001
             self.status.configure(text="连接失败", fg=PALETTE["danger"])
-            self._log(f"连接失败：{exc}")
+            self._report_error("连接浏览器失败", str(exc), "浏览器连接")
 
     @staticmethod
     def _port_available(port: int) -> bool:
@@ -447,20 +468,25 @@ class BrowserHybridWindow(tk.Toplevel):
     def _start(self) -> None:
         if self._running:
             return
-        if self._session is None:
-            self._connect()
-        if self._session is None:
-            return
-        try:
-            # 页面可能是连接后才打开的，重新选择当前活动页面
-            self._session.connect()
-        except Exception as exc:  # noqa: BLE001
-            self.status.configure(text="未找到答题页", fg=PALETTE["danger"])
-            self._log(f"当前没有可扫描的答题页：{exc}")
+        # 「开始」只负责答题；不自动启动浏览器，也不自动重新连接。
+        # 连接/打开浏览器必须由「启动/连接浏览器」显式完成。
+        if self._session is None or self._session.ws is None:
+            self.status.configure(text="未连接", fg=PALETTE["danger"])
+            self._log("尚未连接浏览器：请先点「启动/连接浏览器」，打开答题页后再点「开始」")
+            try:
+                from tkinter import messagebox
+
+                messagebox.showinfo(
+                    "尚未连接浏览器",
+                    "请先点「启动/连接浏览器」，在弹出的 Edge/Chrome 里打开答题页，再点「开始」。",
+                    parent=self,
+                )
+            except Exception:
+                pass
             return
         ai_config, error = self._get_ai_config()
         if ai_config is None:
-            self._log(error)
+            self._show_error("AI 配置不完整", error, "AI 配置")
             return
         self._running = True
         self._stop.clear()
@@ -515,6 +541,7 @@ class BrowserHybridWindow(tk.Toplevel):
                     break
             except Exception as exc:  # noqa: BLE001
                 self._log(f"出错：{exc}")
+                self._report_error("浏览器混合答题出错", str(exc), "混合答题")
                 time.sleep(1.5)
                 break
         self._running = False

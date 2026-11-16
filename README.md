@@ -24,6 +24,8 @@ ATanswer-Windows-x64-Portable.zip
 
 注意：必须解压后运行，不要只把 `ATanswer.exe` 单独拖出来，旁边的 `_internal` 文件夹也要保留。
 
+程序启动时会自动请求管理员权限。若无法启动，错误弹窗会附带可能原因，并检查 Windows 防火墙是否开启。
+
 
 ![主界面](docs/screenshot-main.png)
 

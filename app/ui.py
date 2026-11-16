@@ -1625,6 +1625,11 @@ class MainApp:
         except Exception:  # pragma: no cover
             print(f"[{timestamp}] {message}")
 
+    def _show_actionable_error(self, title: str, error: str, context: str = "") -> None:
+        from . import error_hints
+
+        error_hints.show_error(self.root, title, str(error), context)
+
     def _on_clear_log(self) -> None:
         try:
             self.log_view.clear()
@@ -2462,13 +2467,13 @@ class MainApp:
         self._finish_fill()
         error = str(event.get("error", "未知错误"))
         self._log(f"单次填空失败：{error}", "error")
-        messagebox.showerror("单次填空失败", error, parent=self.root)
+        self._show_actionable_error("单次填空失败", error, "单次填空")
 
     def _on_one_shot_error(self, event: dict) -> None:
         self._finish_one_shot()
         error = str(event.get("error", "未知错误"))
         self._log(f"单次答题失败：{error}", "error")
-        messagebox.showerror("单次答题失败", error, parent=self.root)
+        self._show_actionable_error("单次答题失败", error, "单次答题")
 
     def _on_open_userscript(self) -> None:
         """打开油猴脚本文件，并提示安装/修改配置步骤。"""
@@ -3258,7 +3263,7 @@ class MainApp:
                 pass
         self._restore_after_single_shot()
         self._log(f"AI 看答案失败：{error}", "error")
-        messagebox.showerror("AI 看答案失败", error, parent=self.root)
+        self._show_actionable_error("AI 看答案失败", error, "AI 看答案")
 
     def _on_simple_start(self) -> None:
         if self.mode != "ai":
@@ -3397,7 +3402,7 @@ class MainApp:
         if not started:
             self._restore_main_window()
             self._log(f"启动失败：{error}", "error")
-            messagebox.showerror("启动失败", error, parent=self.root)
+            self._show_actionable_error("启动失败", error, "开始执行")
             self._set_status("idle")
             self._set_controls_running(False)
             return
@@ -3475,6 +3480,17 @@ class MainApp:
             self._log(f"界面异常：{exc_value}", "error")
         except Exception:
             print(detail)
+        try:
+            from . import error_hints
+
+            error_hints.show_error(
+                self.root,
+                "ATanswer 运行异常",
+                str(exc_value) or "未知界面异常",
+                "界面回调",
+            )
+        except Exception:
+            pass
 
     def _shutdown(self) -> None:
         try:

@@ -23,9 +23,9 @@ def iter_files(base: Path):
             continue
         if path.suffix == ".pyc":
             continue
-        if rel.parts and rel.parts[0] in ("data", ".git"):
+        if rel.parts and rel.parts[0] in ("data", ".git", "dist", "build"):
             continue
-        if path.name in (".gitignore", ".gitattributes"):
+        if path.name in (".gitignore", ".gitattributes", "ATanswer.spec", "ATanswer-Portable.spec", "ATanswer-Debug.spec"):
             continue
         if path.is_dir():
             continue
