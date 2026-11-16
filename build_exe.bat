@@ -25,6 +25,8 @@ python -m PyInstaller --noconfirm --clean --windowed ^
     --name "ATanswer" ^
     --icon "assets\app.ico" ^
     --add-data "assets;assets" ^
+    --add-data "README.md;." ^
+    --add-data "LICENSE;." ^
     --collect-submodules app ^
     main.py
 if errorlevel 1 goto :error
