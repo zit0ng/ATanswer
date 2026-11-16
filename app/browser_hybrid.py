@@ -424,14 +424,17 @@ class BrowserHybridWindow(tk.Toplevel):
                 self.var_browser.set(path)
             if not path:
                 raise RuntimeError("未找到 Chrome/Edge，请填写浏览器 exe 路径")
-            # 端口被其它软件占用时，自动向后寻找空闲端口。
-            if self._session is None and not self._port_available(port):
+            # 如果端口上已经有本程序启动的调试浏览器，直接复用它；
+            # 只有端口被无关程序占用时才换端口，避免重复打开新的空白浏览器。
+            session = BrowserSession(port, path,
+                                     str(Path(__file__).resolve().parent.parent / "data" / "browser-profile"))
+            if self._session is None and not self._port_available(port) and not session.is_running():
                 free_port = self._find_free_port(port + 1)
                 self._log(f"端口 {port} 被占用，自动改用 {free_port}")
                 port = free_port
                 self.var_port.set(str(port))
-            session = BrowserSession(port, path,
-                                     str(Path(__file__).resolve().parent.parent / "data" / "browser-profile"))
+                session = BrowserSession(port, path,
+                                         str(Path(__file__).resolve().parent.parent / "data" / "browser-profile"))
             if self._session is not None:
                 self._session.close()
             url = self.var_url.get().strip()

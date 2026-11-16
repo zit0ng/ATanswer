@@ -30,20 +30,22 @@ def firewall_state() -> str:
     return "UNKNOWN"
 
 
-def likely_causes(error: str = "", context: str = "") -> list[str]:
+def likely_causes(error: str = "", context: str = "", state: str = "UNKNOWN") -> list[str]:
     text = f"{context} {error}".lower()
     causes = [
-        "Windows 防火墙或安全软件拦截了程序、浏览器调试端口或网络请求。",
         "程序没有以管理员权限运行，导致无法点击目标窗口或读写文件。",
         "源文件不完整：便携版必须保留 ATanswer.exe 和 _internal 文件夹。",
         "浏览器路径不正确，或 18765/18766 端口被其它程序占用。",
         "AI 接口地址、API Key、网络代理或余额有问题。",
         "目标页面尚未完全加载，或当前标签页不是答题页。",
     ]
+    if "新标签页" in error or "答题页" in error or "newtab" in text:
+        causes.insert(0, "启动/连接后，必须在程序打开的那个 Edge 窗口里进入答题页；原来的 Edge 窗口不算。")
+        causes.insert(1, "「起始网址」为空，或者只粘贴了半截 URL；请填完整 http(s) 地址。")
     if "python" in text or "dll" in text or "runtime" in text:
         causes.insert(0, "当前电脑的 Python 或 VC++ 运行库不完整；请改用便携版，不要单独运行源码。")
-    if "firewall" in text or "防火墙" in text or "连接" in text or "timeout" in text:
-        causes.insert(0, "Windows 防火墙可能拦截了本地调试端口；请允许 ATanswer/pythonw 通过防火墙。")
+    if state == "ON":
+        causes.insert(0, "检测到 Windows 防火墙开启，可能拦截了浏览器调试端口；请允许 ATanswer/pythonw 通过防火墙。")
     if "port" in text or "端口" in text:
         causes.insert(0, "浏览器调试端口被占用；可换端口，或关闭之前由程序启动的浏览器。")
     # 去重，保持顺序
@@ -58,10 +60,13 @@ def format_error(error: str, context: str = "") -> str:
         lines.append("可在「Windows 安全中心 → 防火墙和网络保护 → 允许应用通过防火墙」中允许 ATanswer。")
         lines.append("")
     elif state == "OFF":
-        lines.append("检测到 Windows 防火墙当前关闭，问题更可能是权限、路径或网络代理。")
+        lines.append("检测到 Windows 防火墙当前关闭，问题更可能是权限、路径、网络代理或页面未打开。")
+        lines.append("")
+    else:
+        lines.append("未能确认 Windows 防火墙状态；如果仍然失败，请检查防火墙/安全软件拦截。")
         lines.append("")
     lines.append("可能的原因：")
-    for item in likely_causes(error, context)[:6]:
+    for item in likely_causes(error, context, state)[:7]:
         lines.append(f" - {item}")
     lines.append("")
     lines.append("如果仍无法启动，请把完整报错和日志文件发给开发者。")
