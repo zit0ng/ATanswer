@@ -5,21 +5,139 @@
 """
 from __future__ import annotations
 
+import base64
 import json
 import os
+import socket
+import struct
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import ProxyHandler, Request, build_opener
 
-try:
-    import requests
-except ModuleNotFoundError:  # pragma: no cover
-    requests = None
 
-try:
-    import websocket
-except ModuleNotFoundError:  # pragma: no cover
-    websocket = None
+def _http_json(url: str, timeout: float = 3.0):
+    """只用标准库访问本机 CDP HTTP 接口，避免 requests 依赖。"""
+    request = Request(url, headers={"User-Agent": "ATanswer"})
+    opener = build_opener(ProxyHandler({}))
+    with opener.open(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+class _MiniWebSocket:
+    """给 Chrome CDP 用的最小 WebSocket 客户端（ws://，无 TLS）。"""
+
+    def __init__(self, url: str, timeout: float = 12.0) -> None:
+        parsed = urlparse(url)
+        if parsed.scheme != "ws" or not parsed.hostname:
+            raise RuntimeError(f"不支持的 CDP WebSocket 地址：{url}")
+        self._sock = socket.create_connection(
+            (parsed.hostname, parsed.port or 80), timeout=timeout
+        )
+        self._sock.settimeout(timeout)
+        self._buffer = b""
+        key = base64.b64encode(os.urandom(16)).decode("ascii")
+        path = parsed.path or "/"
+        if parsed.query:
+            path += "?" + parsed.query
+        request = (
+            f"GET {path} HTTP/1.1\r\n"
+            f"Host: {parsed.hostname}:{parsed.port or 80}\r\n"
+            "Upgrade: websocket\r\n"
+            "Connection: Upgrade\r\n"
+            f"Sec-WebSocket-Key: {key}\r\n"
+            "Sec-WebSocket-Version: 13\r\n"
+            "\r\n"
+        )
+        self._sock.sendall(request.encode("ascii"))
+        header = b""
+        while b"\r\n\r\n" not in header:
+            chunk = self._sock.recv(4096)
+            if not chunk:
+                raise RuntimeError("CDP WebSocket 握手失败")
+            header += chunk
+            if len(header) > 65536:
+                raise RuntimeError("CDP WebSocket 握手响应过长")
+        head, _, rest = header.partition(b"\r\n\r\n")
+        if b" 101 " not in head.split(b"\r\n", 1)[0]:
+            raise RuntimeError(head.decode("latin-1", "replace")[:300])
+        self._buffer = rest
+
+    def settimeout(self, timeout: float) -> None:
+        self._sock.settimeout(timeout)
+
+    def _recv_exact(self, count: int) -> bytes:
+        while len(self._buffer) < count:
+            chunk = self._sock.recv(65536)
+            if not chunk:
+                raise ConnectionError("CDP WebSocket 连接已关闭")
+            self._buffer += chunk
+        data, self._buffer = self._buffer[:count], self._buffer[count:]
+        return data
+
+    @staticmethod
+    def _frame(opcode: int, payload: bytes) -> bytes:
+        header = bytearray([0x80 | opcode])
+        length = len(payload)
+        if length < 126:
+            header.append(0x80 | length)
+        elif length < 65536:
+            header.append(0x80 | 126)
+            header += struct.pack("!H", length)
+        else:
+            header.append(0x80 | 127)
+            header += struct.pack("!Q", length)
+        mask = os.urandom(4)
+        header += mask
+        masked = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+        return bytes(header) + masked
+
+    def send(self, text: str) -> None:
+        self._sock.sendall(self._frame(0x1, text.encode("utf-8")))
+
+    def _send_control(self, opcode: int, payload: bytes = b"") -> None:
+        self._sock.sendall(self._frame(opcode, payload))
+
+    def recv(self) -> str:
+        chunks: list[bytes] = []
+        while True:
+            first, second = self._recv_exact(2)
+            fin = bool(first & 0x80)
+            opcode = first & 0x0F
+            masked = bool(second & 0x80)
+            length = second & 0x7F
+            if length == 126:
+                length = struct.unpack("!H", self._recv_exact(2))[0]
+            elif length == 127:
+                length = struct.unpack("!Q", self._recv_exact(8))[0]
+            mask = self._recv_exact(4) if masked else b""
+            payload = self._recv_exact(length)
+            if masked:
+                payload = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+            if opcode == 0x8:
+                raise ConnectionError("CDP WebSocket 已关闭")
+            if opcode == 0x9:
+                self._send_control(0xA, payload)
+                continue
+            if opcode == 0xA:
+                continue
+            if opcode in (0x1, 0x0):
+                chunks.append(payload)
+                if fin:
+                    return b"".join(chunks).decode("utf-8", "replace")
+                continue
+
+    def close(self) -> None:
+        try:
+            self._send_control(0x8)
+        except Exception:
+            pass
+        try:
+            self._sock.close()
+        except Exception:
+            pass
+
 
 
 CHROME_CANDIDATES = [
@@ -53,11 +171,8 @@ class BrowserSession:
         return f"http://127.0.0.1:{self.port}"
 
     def is_running(self) -> bool:
-        if requests is None:
-            return False
         try:
-            requests.get(f"{self.endpoint}/json/version", timeout=1.2,
-                         proxies={"http": None, "https": None})
+            _http_json(f"{self.endpoint}/json/version", timeout=1.2)
             return True
         except Exception:
             return False
@@ -82,21 +197,16 @@ class BrowserSession:
         self.wait_ready()
 
     def wait_ready(self, timeout: float = 15.0) -> None:
-        if requests is None:
-            raise RuntimeError("缺少 requests，无法连接浏览器")
         deadline = time.time() + timeout
         while time.time() < deadline:
             try:
-                requests.get(f"{self.endpoint}/json/version", timeout=1.0,
-                             proxies={"http": None, "https": None})
+                _http_json(f"{self.endpoint}/json/version", timeout=1.0)
                 return
             except Exception:
                 time.sleep(0.25)
         raise RuntimeError("浏览器调试端口未就绪，请检查端口是否被占用")
 
     def connect(self) -> None:
-        if requests is None or websocket is None:
-            raise RuntimeError("缺少 requests/websocket-client，请先安装：pip install requests websocket-client")
         self.wait_ready()
         try:
             if self.ws is not None:
@@ -104,8 +214,7 @@ class BrowserSession:
         except Exception:
             pass
         self.ws = None
-        data = requests.get(f"{self.endpoint}/json/list", timeout=3,
-                            proxies={"http": None, "https": None}).json()
+        data = _http_json(f"{self.endpoint}/json/list", timeout=3)
         pages = [
             x for x in data
             if x.get("type") == "page"
@@ -116,9 +225,7 @@ class BrowserSession:
             raise RuntimeError("浏览器当前只有新标签页，请先在这个浏览器里打开答题页面")
         target = next((x for x in pages if x.get("url", "").startswith(("http://", "https://"))), pages[0])
         self.target_info = target
-        self.ws = websocket.create_connection(
-            target["webSocketDebuggerUrl"], timeout=12, suppress_origin=True
-        )
+        self.ws = _MiniWebSocket(target["webSocketDebuggerUrl"], timeout=12)
         self.call("Runtime.enable")
         self.call("Page.enable")
 

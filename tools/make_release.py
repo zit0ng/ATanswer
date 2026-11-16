@@ -12,7 +12,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-NAME = "智能点击助手-Windows-v1.0.0"
+NAME = "ATanswer-Windows-v1.0.0"
 OUTPUT = ROOT.parent / f"{NAME}.zip"
 
 
@@ -23,7 +23,9 @@ def iter_files(base: Path):
             continue
         if path.suffix == ".pyc":
             continue
-        if rel.parts and rel.parts[0] == "data":  # 运行数据不打包
+        if rel.parts and rel.parts[0] in ("data", ".git"):
+            continue
+        if path.name in (".gitignore", ".gitattributes"):
             continue
         if path.is_dir():
             continue

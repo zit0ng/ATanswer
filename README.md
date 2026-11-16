@@ -4,7 +4,7 @@
 >
 > 浏览器混合答题适合字体反爬页面：选项和输入框通过 DOM 操作，题目内容由 AI 视觉模型读取。
 
-运行需要 Python 3.11+；基础功能使用标准库，浏览器混合答题额外需要 `requests` 和 `websocket-client`。
+运行需要 Python 3.11+；基础功能和浏览器混合答题均使用标准库（浏览器调试连接不需要 requests/websocket-client）。
 
 ![主界面](docs/screenshot-main.png)
 

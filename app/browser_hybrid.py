@@ -414,7 +414,10 @@ class BrowserHybridWindow(tk.Toplevel):
             if self._session is not None:
                 self._session.close()
             url = self.var_url.get().strip()
-            session.launch(url if url.startswith(("http://", "https://")) else "")
+            if url and not url.startswith(("http://", "https://")):
+                self._log("起始网址不是完整 http(s) 地址，已忽略；请打开完整答题页")
+                url = ""
+            session.launch(url)
             session.connect()
             self._session = session
             self.status.configure(text="已连接", fg=PALETTE["success"])
