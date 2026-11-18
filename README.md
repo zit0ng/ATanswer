@@ -4,27 +4,23 @@
 >
 > 浏览器混合答题适合字体反爬页面：选项和输入框通过 DOM 操作，题目内容由 AI 视觉模型读取。
 
-## 0. 直接发给别人使用（推荐）
+## 0. 下载
 
-不要把源码直接发给普通用户，也不要求对方安装 Python。
+### 默认下载（推荐）
 
-使用便携版压缩包：
+**便携版**：不需要安装 Python、requests、websocket-client 或 VC++ 运行库。
 
-```text
-ATanswer-Windows-x64-Portable.zip
-```
+[下载 ATanswer-Windows-x64-Portable.zip](https://github.com/zitongQAQ/ATanswer/releases/latest/download/ATanswer-Windows-x64-Portable.zip)
 
-对方只需要：
+解压整个文件夹后，双击 `ATanswer.exe` 或 `启动.bat`。
 
-1. 解压整个文件夹；
-2. 双击 `ATanswer.exe` 或 `启动.bat`；
-3. 不需要安装 Python；
-4. 不需要安装 requests / websocket-client；
-5. 不需要单独安装 VC++ 运行库（会随程序打包）。
+> 便携版必须保留 `ATanswer.exe` 和旁边的 `_internal` 文件夹，不要只把 exe 单独拖出来。
 
-注意：必须解压后运行，不要只把 `ATanswer.exe` 单独拖出来，旁边的 `_internal` 文件夹也要保留。
+### 其他版本
 
-程序启动时会自动请求管理员权限。若无法启动，错误弹窗会附带可能原因，并检查 Windows 防火墙是否开启。
+**源码版**：适合已经安装 Python 3.11+、想自行修改或二次开发的用户。
+
+[下载 ATanswer-Source-Windows-v1.0.0.zip](https://github.com/zitongQAQ/ATanswer/releases/latest/download/ATanswer-Source-Windows-v1.0.0.zip)
 
 
 ![主界面](docs/screenshot-main.png)
