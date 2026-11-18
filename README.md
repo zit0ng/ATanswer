@@ -10,7 +10,7 @@
 
 **便携版**：不需要安装 Python、requests、websocket-client 或 VC++ 运行库。
 
-[下载 ATanswer-Windows-x64-Portable.zip](https://github.com/zitongQAQ/ATanswer/releases/latest/download/ATanswer-Windows-x64-Portable.zip)
+[下载 ATanswer-Portable-Windows-x64.zip](https://github.com/zitongQAQ/ATanswer/releases/latest/download/ATanswer-Portable-Windows-x64.zip)
 
 解压整个文件夹后，双击 `ATanswer.exe` 或 `启动.bat`。
 
