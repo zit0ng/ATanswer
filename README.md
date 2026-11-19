@@ -3,6 +3,8 @@
 > ATanswer 是一个桌面答题辅助工具：支持截图 AI 看答案、单次填空/选择、自动答题，以及浏览器混合答题（DOM 定位 + 视觉读题）。
 >
 > 浏览器混合答题适合字体反爬页面：选项和输入框通过 DOM 操作，题目内容由 AI 视觉模型读取。
+>
+> 许可证：**ATanswer Anti-Commercial Source License 1.1**。允许个人/教育/研究等非商业用途，禁止第三方商业使用和商业再分发；这不是 OSI 开源许可证。详见 [LICENSE](LICENSE)。
 
 ## 0. 下载
 
@@ -558,13 +560,18 @@ build_exe.bat
 
 ## 9. 许可证
 
-本项目使用自定义源码许可证：
+本项目使用 **ATanswer Anti-Commercial Source License 1.1**：
 
 - 允许个人、教育、研究等非商业用途；
-- **禁止商业使用和商业二次分发**；
-- 非商业转载/分发必须保留 `LICENSE`、版权声明，并注明修改；
+- **禁止第三方商业使用**；
+- **禁止商业再分发、付费打包、付费下载、付费会员、商业 SaaS、商业市场分发**；
+- 非商业转载/分发必须保留 `LICENSE`、`NOTICE` 和版权声明，并注明修改；
 - 商业授权需联系作者。
 
-完整条款见 [LICENSE](LICENSE)。
+文件：
 
-> 由于限制商业使用和商业二次分发，这不是 OSI 定义的开源许可证；仓库为 source-available。
+- [LICENSE](LICENSE)（正式英文条款）
+- [LICENSE.zh-CN.md](LICENSE.zh-CN.md)（中文参考译文）
+- [NOTICE](NOTICE)（版权与许可摘要）
+
+> 由于限制商业使用和商业再分发，这不是 OSI 定义的开源许可证；仓库为 source-available。GitHub 可能显示为 `NOASSERTION`，这是自定义许可证的正常结果。
