@@ -532,8 +532,7 @@ class BrowserHybridWindow(tk.Toplevel):
                 if blanks:
                     self._do_blanks(ai_config, blanks)
                 elif inputs:
-                    image = self._session.screenshot(full_page=True)
-                    self._do_fills(image, ai_config, inputs)
+                    self._do_fills(ai_config, inputs)
                 if not auto_next:
                     break
                 nxt = data.get("next")
@@ -704,16 +703,23 @@ class BrowserHybridWindow(tk.Toplevel):
             except Exception as exc:  # noqa: BLE001
                 self._log(f"填写第 {number} 题第 {slot} 空失败：{exc}")
 
-    def _do_fills(self, image: bytes, ai_config, inputs: list[dict]) -> None:
-        answer = ai_client.ask_fill(image, ai_config, overwrite=True)
-        items = list(answer.items or [])
-        for i, item in enumerate(items):
-            if i >= len(inputs):
-                break
-            value = str(getattr(item, "answer", "") or "").strip()
+    def _do_fills(self, ai_config, inputs: list[dict]) -> None:
+        # 不把整页当作一张图发给 AI；按分段截图，避免超过模型 8192px 限制。
+        answers = self._collect_fill_answers(ai_config)
+        ordered = [
+            value for (number, slot), value in sorted(answers.items())
+            if number > 0
+        ]
+        sequential = [
+            value for (number, slot), value in sorted(answers.items())
+            if number < 0
+        ]
+        for i, inp in enumerate(inputs):
+            value = ordered[i] if i < len(ordered) else (
+                sequential[i] if i < len(sequential) else ""
+            )
             if not value:
                 continue
-            inp = inputs[i]
             current = str(inp.get("value", "") or "").strip()
             if current == value:
                 self._log(f"输入框 {i+1} 已是目标值，跳过")

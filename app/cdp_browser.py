@@ -310,7 +310,7 @@ class BrowserSession:
                     params["clip"] = {
                         "x": 0, "y": 0,
                         "width": min(width, 2400),
-                        "height": min(height, 12000),
+                        "height": min(height, 8000),
                         "scale": 1,
                     }
             except Exception:  # noqa: BLE001
@@ -334,7 +334,8 @@ class BrowserSession:
                 "captureBeyondViewport": True,
                 "clip": {
                     "x": int(x), "y": int(y),
-                    "width": max(1, int(width)), "height": max(1, int(height)),
+                    "width": min(8000, max(1, int(width))),
+                    "height": min(8000, max(1, int(height))),
                     "scale": 1,
                 },
             },
