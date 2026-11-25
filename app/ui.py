@@ -1140,7 +1140,7 @@ class MainApp:
         thinking_row.pack(fill="x", pady=(0, self.px(7)))
         self._make_check(
             thinking_row,
-            "允许模型思考（DeepSeek 专用：更准但更慢，容易超时）",
+            "允许模型思考（不要勾选此选项）",
             self.var_ai_enable_thinking,
         ).pack(side="left")
         tk.Label(
