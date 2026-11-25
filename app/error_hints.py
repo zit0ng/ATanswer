@@ -1,9 +1,11 @@
-"""统一错误提示：任何报错都附带可能原因（含 Windows 防火墙检查）。"""
+"""统一错误提示：只显示最可能原因和联系方式。"""
 from __future__ import annotations
 
 import subprocess
 import tkinter as tk
 from tkinter import messagebox
+
+CONTACT = "zit0ngeneral@outlook.com"
 
 
 def firewall_state() -> str:
@@ -30,74 +32,46 @@ def firewall_state() -> str:
     return "UNKNOWN"
 
 
-def likely_causes(error: str = "", context: str = "", state: str = "UNKNOWN") -> list[str]:
+def likely_reason(error: str = "", context: str = "", state: str = "UNKNOWN") -> str:
     text = f"{context} {error}".lower()
-    causes = [
-        "程序没有以管理员权限运行，导致无法点击目标窗口或读写文件。",
-        "源文件不完整：便携版必须保留 ATanswer.exe 和 _internal 文件夹。",
-        "浏览器路径不正确，或 18765/18766 端口被其它程序占用。",
-        "AI 接口地址、API Key、网络代理或余额有问题。",
-        "目标页面尚未完全加载，或当前标签页不是答题页。",
-    ]
     if (
         "insufficient" in text
         or "balance" in text
         or "402" in text
-        or "余额" in text
-        or "欠费" in text
+        or "余额" in error
+        or "欠费" in error
     ):
-        causes.insert(0, "AI 接口账户余额不足或欠费（HTTP 402）：请充值，或更换有余额的 API Key / 接口。")
+        return "AI 接口账户余额不足或欠费，请充值或更换有余额的 API Key。"
+    if "401" in text or "unauthorized" in text or "invalid api key" in text:
+        return "AI 接口 API Key 无效，请检查 Key 和接口地址是否匹配。"
     if "新标签页" in error or "答题页" in error or "newtab" in text:
-        causes.insert(0, "启动/连接后，必须在程序打开的那个 Edge 窗口里进入答题页；原来的 Edge 窗口不算。")
-        causes.insert(1, "「起始网址」为空，或者只粘贴了半截 URL；请填完整 http(s) 地址。")
-    if "python" in text or "dll" in text or "runtime" in text:
-        causes.insert(0, "当前电脑的 Python 或 VC++ 运行库不完整；请改用便携版，不要单独运行源码。")
+        return "程序打开的浏览器里没有答题页，请在那个 Edge/Chrome 窗口打开答题页后再连接。"
+    if "dll" in text or "runtime" in text or "python" in text:
+        return "Python 或 VC++ 运行库不完整，请使用便携版并保留 _internal 文件夹。"
+    if "port" in text or "端口" in text or "10053" in text:
+        return "浏览器调试连接被中断，通常是页面被关闭/切换，或调试端口被占用。"
+    if "timeout" in text or "timed out" in text or "connection" in text or "网络" in text:
+        return "网络、代理或 AI 接口连接超时，请检查网络和 API 地址。"
+    if "permission" in text or "access" in text or "admin" in text or "权限" in error:
+        return "程序权限不足，请以管理员身份运行。"
     if state == "ON":
-        causes.insert(0, "检测到 Windows 防火墙开启，可能拦截了浏览器调试端口；请允许 ATanswer/pythonw 通过防火墙。")
-    if "port" in text or "端口" in text:
-        causes.insert(0, "浏览器调试端口被占用；可换端口，或关闭之前由程序启动的浏览器。")
-    # 去重，保持顺序
-    return list(dict.fromkeys(causes))
+        return "Windows 防火墙或安全软件可能拦截了程序，请允许 ATanswer 通过防火墙。"
+    if state == "OFF":
+        return "浏览器连接、页面状态或 API 配置异常，请确认答题页已打开且 API 配置正确。"
+    return "程序运行异常，请重试；若持续出现，请检查浏览器页面、权限和 API 配置。"
 
 
 def format_error(error: str, context: str = "") -> str:
-    state = firewall_state()
-    lower = f"{context} {error}".lower()
-    balance_error = (
-        "insufficient" in lower
-        or "balance" in lower
-        or "402" in lower
-        or "余额" in error
-        or "欠费" in error
-    )
-    lines = []
-    if balance_error:
-        lines.append("检测到 AI 接口返回 HTTP 402：账户余额不足/欠费，这不是防火墙或浏览器问题。")
-        lines.append("请到对应 API 平台充值，或在「高级设置 → AI 接口设置」里更换有余额的 Key / 模型。")
-        lines.append("")
-    if state == "ON":
-        lines.append("检测到 Windows 防火墙处于开启状态，可能是它拦截了程序。")
-        lines.append("可在「Windows 安全中心 → 防火墙和网络保护 → 允许应用通过防火墙」中允许 ATanswer。")
-        lines.append("")
-    elif state == "OFF":
-        lines.append("检测到 Windows 防火墙当前关闭，问题更可能是权限、路径、网络代理或页面未打开。")
-        lines.append("")
-    else:
-        lines.append("未能确认 Windows 防火墙状态；如果仍然失败，请检查防火墙/安全软件拦截。")
-        lines.append("")
-    lines.append("可能的原因：")
-    for item in likely_causes(error, context, state)[:7]:
-        lines.append(f" - {item}")
-    lines.append("")
-    lines.append("如果仍无法启动，请把完整报错和日志文件发给开发者。")
-    return "\n".join(lines)
+    reason = likely_reason(error, context, firewall_state())
+    return f"最可能原因：{reason}\n\n联系我:{CONTACT}"
 
 
 def show_error(parent: tk.Misc | None, title: str, error: str, context: str = "") -> None:
+    message = f"{error}\n\n{format_error(error, context)}"
     try:
-        messagebox.showerror(title, f"{error}\n\n{format_error(error, context)}", parent=parent)
+        messagebox.showerror(title, message, parent=parent)
     except Exception:
         try:
-            messagebox.showerror(title, f"{error}\n\n{format_error(error, context)}")
+            messagebox.showerror(title, message)
         except Exception:
             pass

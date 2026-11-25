@@ -575,3 +575,5 @@ build_exe.bat
 - [NOTICE](NOTICE)（版权与许可摘要）
 
 > 由于限制商业使用和商业再分发，这不是 OSI 定义的开源许可证；仓库为 source-available。GitHub 可能显示为 `NOASSERTION`，这是自定义许可证的正常结果。
+
+联系我：zit0ngeneral@outlook.com

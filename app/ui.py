@@ -2553,7 +2553,7 @@ class MainApp:
         result = event.get("result")
         if error or not result:
             self._log(f"AI 识别失败：{error or '未知错误'}", "error")
-            messagebox.showerror("AI 识别失败", str(error or "未知错误"), parent=self.root)
+            self._show_actionable_error("AI 识别失败", str(error or "未知错误"), "AI 识别")
             return
         answer = result.get("answer")
         if answer is None:
@@ -2626,10 +2626,8 @@ class MainApp:
         result = event.get("result")
         if error or not result:
             self._log(f"AI 识别选项位置失败：{error or '未知错误'}", "error")
-            messagebox.showerror(
-                "AI 识别选项位置失败",
-                f"{error or '未知错误'}\n\n可改用手动拾取，或重新框选更完整的题目区域。",
-                parent=self.root,
+            self._show_actionable_error(
+                "AI 识别选项位置失败", str(error or "未知错误"), "AI 识别选项位置"
             )
             return
         layout = result["layout"]
@@ -2678,7 +2676,7 @@ class MainApp:
             template = load_template(path, self.root)
         except Exception as exc:  # noqa: BLE001
             self._log(f"模板加载失败：{exc}", "error")
-            messagebox.showerror("模板加载失败", str(exc), parent=self.root)
+            self._show_actionable_error("模板加载失败", str(exc), "模板加载")
             return False
         if template.width > 1600 or template.height > 1200:
             self._log("模板尺寸较大，匹配速度可能变慢", "warn")
@@ -2734,7 +2732,7 @@ class MainApp:
             )
         except Exception as exc:  # noqa: BLE001
             self._log(f"模板截取失败：{exc}", "error")
-            messagebox.showerror("模板截取失败", str(exc), parent=self.root)
+            self._show_actionable_error("模板截取失败", str(exc), "模板截取")
 
     def _refresh_template_thumb(self) -> None:
         template = self.template
