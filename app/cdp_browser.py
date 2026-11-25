@@ -206,7 +206,7 @@ class BrowserSession:
                 time.sleep(0.25)
         raise RuntimeError("浏览器调试端口未就绪，请检查端口是否被占用")
 
-    def connect(self) -> None:
+    def connect(self, preferred_url: str = "") -> None:
         self.wait_ready()
         try:
             if self.ws is not None:
@@ -215,18 +215,48 @@ class BrowserSession:
             pass
         self.ws = None
         data = _http_json(f"{self.endpoint}/json/list", timeout=3)
+        default_hosts = (
+            "discovery.lenovo.com.cn",
+            "microsoft.com",
+            "msn.com",
+            "bing.com",
+            "baidu.com",
+            "google.com",
+        )
+
+        def is_default_page(url: str) -> bool:
+            text = str(url or "").lower()
+            return any(host in text for host in default_hosts)
+
         pages = [
             x for x in data
             if x.get("type") == "page"
             and x.get("webSocketDebuggerUrl")
             and not str(x.get("url", "")).startswith(("chrome://", "edge://", "about:"))
+            and not is_default_page(x.get("url", ""))
         ]
         if not pages:
             raise RuntimeError(
-                "浏览器当前只有新标签页，请先在这个浏览器里打开答题页面；"
+                "浏览器当前只有新标签页或浏览器默认主页，请先在这个浏览器里打开答题页面；"
                 "再点击「启动/连接浏览器」按钮，显示已连接后点击「开始」即可。"
             )
-        target = next((x for x in pages if x.get("url", "").startswith(("http://", "https://"))), pages[0])
+        target = None
+        if preferred_url:
+            try:
+                from urllib.parse import urlparse
+
+                wanted = urlparse(preferred_url).netloc.lower()
+                if wanted:
+                    target = next(
+                        (x for x in pages if wanted in str(x.get("url", "")).lower()),
+                        None,
+                    )
+            except Exception:
+                target = None
+        target = target or next(
+            (x for x in pages if x.get("url", "").startswith(("http://", "https://"))),
+            pages[0],
+        )
         self.target_info = target
         self.ws = _MiniWebSocket(target["webSocketDebuggerUrl"], timeout=12)
         self.call("Runtime.enable")
