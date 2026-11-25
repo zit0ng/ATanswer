@@ -39,6 +39,14 @@ def likely_causes(error: str = "", context: str = "", state: str = "UNKNOWN") ->
         "AI 接口地址、API Key、网络代理或余额有问题。",
         "目标页面尚未完全加载，或当前标签页不是答题页。",
     ]
+    if (
+        "insufficient" in text
+        or "balance" in text
+        or "402" in text
+        or "余额" in text
+        or "欠费" in text
+    ):
+        causes.insert(0, "AI 接口账户余额不足或欠费（HTTP 402）：请充值，或更换有余额的 API Key / 接口。")
     if "新标签页" in error or "答题页" in error or "newtab" in text:
         causes.insert(0, "启动/连接后，必须在程序打开的那个 Edge 窗口里进入答题页；原来的 Edge 窗口不算。")
         causes.insert(1, "「起始网址」为空，或者只粘贴了半截 URL；请填完整 http(s) 地址。")
@@ -54,7 +62,19 @@ def likely_causes(error: str = "", context: str = "", state: str = "UNKNOWN") ->
 
 def format_error(error: str, context: str = "") -> str:
     state = firewall_state()
+    lower = f"{context} {error}".lower()
+    balance_error = (
+        "insufficient" in lower
+        or "balance" in lower
+        or "402" in lower
+        or "余额" in error
+        or "欠费" in error
+    )
     lines = []
+    if balance_error:
+        lines.append("检测到 AI 接口返回 HTTP 402：账户余额不足/欠费，这不是防火墙或浏览器问题。")
+        lines.append("请到对应 API 平台充值，或在「高级设置 → AI 接口设置」里更换有余额的 Key / 模型。")
+        lines.append("")
     if state == "ON":
         lines.append("检测到 Windows 防火墙处于开启状态，可能是它拦截了程序。")
         lines.append("可在「Windows 安全中心 → 防火墙和网络保护 → 允许应用通过防火墙」中允许 ATanswer。")
